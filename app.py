@@ -1,50 +1,229 @@
-import random
+ort random
+
 import streamlit as st
 
+
+
 # 페이지 설정
+
 st.set_page_config(
-    page_title="로또 번호 생성기",
+
+    page_title="로또 시뮬레이터",
+
     page_icon="🎰",
+
     layout="centered"
+
 )
 
+
+
 # 제목
-st.title("🎰 로또 번호 생성기")
-st.write("버튼을 누르면 로또 번호를 생성합니다!")
+
+st.title("🎰 로또 시뮬레이터")
+
+st.write("직접 번호를 선택하고 당첨 결과를 확인하세요!")
+
+
+
+# -----------------------------
+
+# 로또 번호 생성 함수
+
+# -----------------------------
 
 def generate_lotto_numbers():
-    """
-    로또 번호 생성
-    메인 번호 6개 + 보너스 번호 1개
-    """
 
-    # 1~45 숫자 생성
+
+
     numbers = list(range(1, 46))
 
-    # 랜덤 섞기
     random.shuffle(numbers)
 
-    # 메인 번호 6개
+
+
     main_numbers = sorted(numbers[:6])
 
-    # 보너스 번호
     bonus_number = numbers[6]
+
+
 
     return main_numbers, bonus_number
 
 
-# 버튼 클릭 시 생성
-if st.button("번호 생성하기"):
 
-    main_nums, bonus_num = generate_lotto_numbers()
 
-    st.success("로또 번호 생성 완료!")
 
-    st.subheader("🎯 메인 번호")
-    st.write(main_nums)
+# -----------------------------
 
-    st.subheader("⭐ 보너스 번호")
-    st.write(bonus_num)
+# 당첨 결과 확인 함수
 
-    # 풍선 효과
-    st.balloons()
+# -----------------------------
+
+def check_lotto_result(user_numbers, lotto_numbers, bonus_number):
+
+
+
+    matched = len(set(user_numbers) & set(lotto_numbers))
+
+
+
+    bonus_match = bonus_number in user_numbers
+
+
+
+    # 당첨 기준
+
+    if matched == 6:
+
+        rank = "🎉 1등"
+
+        prize = "3,000,000,000원"
+
+    elif matched == 5 and bonus_match:
+
+        rank = "🥈 2등"
+
+        prize = "50,000,000원"
+
+    elif matched == 5:
+
+        rank = "🥉 3등"
+
+        prize = "1,000,000원"
+
+    elif matched == 4:
+
+        rank = "🏅 4등"
+
+        prize = "50,000원"
+
+    elif matched == 3:
+
+        rank = "🎁 5등"
+
+        prize = "5,000원"
+
+    else:
+
+        rank = "❌ 낙첨"
+
+        prize = "0원"
+
+
+
+    return matched, bonus_match, rank, prize
+
+
+
+
+
+# -----------------------------
+
+# 사용자 번호 선택
+
+# -----------------------------
+
+st.subheader("✍️ 내 번호 선택")
+
+
+
+user_numbers = st.multiselect(
+
+    "1~45 중 6개의 번호를 선택하세요",
+
+    options=list(range(1, 46)),
+
+    max_selections=6
+
+)
+
+
+
+# -----------------------------
+
+# 추첨 버튼
+
+# -----------------------------
+
+if st.button("🎲 로또 추첨하기"):
+
+
+
+    if len(user_numbers) != 6:
+
+        st.error("반드시 6개의 번호를 선택해야 합니다.")
+
+    else:
+
+
+
+        # 로또 번호 생성
+
+        lotto_numbers, bonus_number = generate_lotto_numbers()
+
+
+
+        # 결과 확인
+
+        matched, bonus_match, rank, prize = check_lotto_result(
+
+            user_numbers,
+
+            lotto_numbers,
+
+            bonus_number
+
+        )
+
+
+
+        # 결과 출력
+
+        st.success("추첨 완료!")
+
+
+
+        st.subheader("🎯 당첨 번호")
+
+        st.write(lotto_numbers)
+
+
+
+        st.subheader("⭐ 보너스 번호")
+
+        st.write(bonus_number)
+
+
+
+        st.subheader("🙋 내 번호")
+
+        st.write(sorted(user_numbers))
+
+
+
+        st.subheader("📊 결과")
+
+
+
+        st.write(f"일치한 번호 개수: {matched}개")
+
+
+
+        if bonus_match:
+
+            st.write("보너스 번호도 일치했습니다! ⭐")
+
+
+
+        st.write(f"등수: {rank}")
+
+        st.write(f"상금: {prize}")
+
+
+
+        # 1등이면 풍선 효과
+
+        if matched == 6:
+
+            st.balloons()
