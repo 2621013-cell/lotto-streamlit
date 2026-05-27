@@ -1,71 +1,45 @@
 import random
-import time
 import streamlit as st
 
 # =====================================================
-# PAGE
+# 페이지 설정
 # =====================================================
 st.set_page_config(
-    page_title="🎰 Lotto RPG",
+    page_title="🎰 Ultimate Lotto RPG",
     page_icon="🎰",
     layout="centered"
 )
 
 # =====================================================
-# UI STYLE (모바일 느낌)
+# CSS
 # =====================================================
 st.markdown("""
 <style>
-
-body {
-    background-color: #f4f6f8;
-}
-
-.title {
-    text-align:center;
-    font-size:38px;
-    font-weight:bold;
-    color:#ffcc00;
-}
-
-.card {
-    background:white;
-    padding:15px;
-    border-radius:15px;
-    margin:10px 0;
-    box-shadow:0px 2px 8px rgba(0,0,0,0.1);
-}
-
 .ball {
     display:inline-block;
-    width:50px;
-    height:50px;
+    width:55px;
+    height:55px;
     border-radius:50%;
     text-align:center;
-    line-height:50px;
+    line-height:55px;
     color:white;
     font-weight:bold;
     margin:3px;
 }
 
-.yellow{background:#fbc400;}
-.blue{background:#69c8f2;}
-.red{background:#ff7272;}
-.gray{background:#aaa;}
-.green{background:#7cc576;}
-
-button {
-    border-radius:10px;
-}
-
+.yellow {background:#fbc400;}
+.blue {background:#69c8f2;}
+.red {background:#ff7272;}
+.gray {background:#aaa;}
+.green {background:#7cc576;}
 </style>
 """, unsafe_allow_html=True)
 
 # =====================================================
-# INIT STATE
+# 초기값 (수정됨: 100만원 시작)
 # =====================================================
 defaults = {
-    "money": 100000,
+    "money": 1000000,   # ✅ 변경
     "games": 0,
     "wins": 0,
     "ticket_price": 10000,
@@ -75,17 +49,19 @@ defaults = {
     "fever": False,
     "fever_left": 0,
     "fever_count": 0,
-    "ending": False,
-    "ending_open": False,
-    "auto": []
+    "auto": [],
+    "show_shop": False,
+
+    # ✅ 추가
+    "double_money": False
 }
 
-for k,v in defaults.items():
+for k, v in defaults.items():
     if k not in st.session_state:
         st.session_state[k] = v
 
 # =====================================================
-# COLOR
+# 유틸
 # =====================================================
 def color(n):
     if n <= 10: return "yellow"
@@ -101,12 +77,15 @@ def draw(nums):
     st.markdown(html, unsafe_allow_html=True)
 
 # =====================================================
-# LOTTO
+# 로또 생성
 # =====================================================
 def generate():
-    nums = random.sample(range(1, st.session_state.max_number+1), 7)
+    nums = random.sample(range(1, st.session_state.max_number + 1), 7)
     return sorted(nums[:6]), nums[6]
 
+# =====================================================
+# 점수 계산
+# =====================================================
 def calc(user, lotto):
     m = len(set(user) & set(lotto))
 
@@ -123,99 +102,69 @@ def calc(user, lotto):
     return m, *table[m]
 
 # =====================================================
-# TITLE
+# 타이틀
 # =====================================================
-st.markdown('<div class="title">🎰 Lotto RPG</div>', unsafe_allow_html=True)
+st.title("🎰 Lotto RPG")
 
-# =====================================================
-# STATUS UI
-# =====================================================
-st.markdown("### 💰 상태")
-
-col1,col2,col3 = st.columns(3)
-col1.metric("돈", f"{st.session_state.money:,}")
-col2.metric("게임", st.session_state.games)
-col3.metric("당첨", st.session_state.wins)
-
-# =====================================================
-# ENDING SYSTEM
-# =====================================================
-if st.session_state.money >= 100000000000:
-    st.session_state.ending = True
-
-if st.session_state.ending:
-
-    st.success("🏁 엔딩 도달!")
-
-    if st.button("🎬 엔딩 보기"):
-        st.session_state.ending_open = True
-
-    if st.session_state.ending_open:
-
-        st.markdown("""
-        <div class="card">
-        👑 당신은 로또 세계의 지배자가 되었습니다.<br>
-        모든 확률을 지배했습니다.
-        </div>
-        """, unsafe_allow_html=True)
-
-        col1,col2 = st.columns(2)
-
-        if col1.button("🔁 이어하기"):
-            st.session_state.ending_open = False
-            st.session_state.ending = False
-
-        if col2.button("🔄 처음부터"):
-
-            for k in list(st.session_state.keys()):
-                del st.session_state[k]
-            st.rerun()
-
-    st.stop()
-
-# =====================================================
-# SHOP
-# =====================================================
-st.subheader("🛒 상점")
-
-if st.button("💸 반값 아이템 (3M)"):
-    if st.session_state.money >= 3000000:
-        st.session_state.money -= 3000000
-        st.session_state.ticket_price = max(100, int(st.session_state.ticket_price * 0.5))
-
-if st.button("🎯 번호 제한 (30)"):
-    if st.session_state.money >= 10000000:
-        st.session_state.money -= 10000000
-        st.session_state.max_number = 30
+st.metric("💰 돈", f"{st.session_state.money:,}")
 
 st.divider()
 
 # =====================================================
-# AUTO
+# 🛒 상점
+# =====================================================
+st.subheader("🛒 상점")
+
+# 끝번호 아이템
+if st.button("🎯 번호 1~30 제한 (10,000,000원)"):
+
+    if st.session_state.money >= 10000000:
+        st.session_state.money -= 10000000
+        st.session_state.max_number = 30
+
+# 반값 아이템
+if st.button("💸 반값 아이템 (3,000,000원)"):
+
+    if st.session_state.money >= 3000000:
+        st.session_state.money -= 3000000
+        st.session_state.ticket_price = max(
+            100,
+            st.session_state.ticket_price // 2
+        )
+
+# ⭐ 추가: 돈 2배 포션 (영구)
+if not st.session_state.double_money:
+
+    if st.button("💰 돈 2배 포션 (20,000,000원)"):
+
+        if st.session_state.money >= 20000000:
+            st.session_state.money -= 20000000
+            st.session_state.double_money = True
+            st.success("💰 모든 보상이 2배 됩니다!")
+
+st.divider()
+
+# =====================================================
+# 자동 번호
 # =====================================================
 if st.button("🤖 자동 번호"):
     st.session_state.auto = sorted(
-        random.sample(range(1, st.session_state.max_number+1), 6)
+        random.sample(range(1, st.session_state.max_number + 1), 6)
     )
 
 user = st.multiselect(
     f"1~{st.session_state.max_number}",
-    list(range(1, st.session_state.max_number+1)),
+    list(range(1, st.session_state.max_number + 1)),
     default=st.session_state.auto,
     max_selections=6
 )
 
 # =====================================================
-# GAME
+# 게임
 # =====================================================
 if st.button("🎲 뽑기"):
 
     price = st.session_state.ticket_price
-
-    # fever
-    if st.session_state.fever:
-        price = 0
-        st.session_state.fever_left -= 1
 
     if st.session_state.money < price:
         st.error("돈 부족")
@@ -228,23 +177,13 @@ if st.button("🎲 뽑기"):
     st.session_state.money -= price
     st.session_state.games += 1
 
-    # fever trigger
-    if not st.session_state.fever:
-        st.session_state.fever_count += 1
-
-    if st.session_state.fever_count >= 100:
-        st.session_state.fever = True
-        st.session_state.fever_left = 50
-        st.session_state.fever_count = 0
-        st.success("🔥 피버타임!")
-
-    if st.session_state.fever and st.session_state.fever_left <= 0:
-        st.session_state.fever = False
-
     lotto, bonus = generate()
+
     m, rank, prize = calc(user, lotto)
 
-    prize *= 10  # 10배 시스템
+    # ⭐ 핵심 추가: 2배 포션 적용
+    if st.session_state.double_money:
+        prize *= 2
 
     st.session_state.money += prize
 
@@ -259,18 +198,13 @@ if st.button("🎲 뽑기"):
 
     st.write(f"{m}개 | {rank} | {prize:,}원")
 
-    if st.session_state.fever:
-        st.warning(f"🔥 피버 남은: {st.session_state.fever_left}")
-
     if m == 6:
         st.balloons()
 
 # =====================================================
-# RESET
+# 리셋
 # =====================================================
-st.divider()
-
-if st.button("🔄 리셋"):
+if st.button("🔄 초기화"):
     for k in list(st.session_state.keys()):
         del st.session_state[k]
     st.rerun()
