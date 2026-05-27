@@ -123,27 +123,27 @@ def check_result(user_numbers, lotto_numbers):
 
     if matched == 6:
         rank = "🎉 1등"
-        prize = 200000000
+        prize = 2000000000
 
     elif matched == 5:
         rank = "🥈 2등"
-        prize = 10000000
+        prize = 100000000
 
     elif matched == 4:
         rank = "🥉 3등"
-        prize = 300000
+        prize = 3000000
 
     elif matched == 3:
         rank = "🏅 4등"
-        prize = 100000
+        prize = 1000000
 
     elif matched == 2:
         rank = "🎁 5등"
-        prize = 20000
+        prize = 200000
 
     elif matched == 1:
         rank = "🎊 참가상"
-        prize = 5000
+        prize = 50000
 
     else:
         rank = "❌ 낙첨"
@@ -193,7 +193,7 @@ user_numbers = st.multiselect(
 if st.button("🎲 로또 추첨하기"):
 
     # 게임 비용
-    ticket_price = 1000
+    ticket_price = 10000
 
     if st.session_state.money < ticket_price:
         st.error("💸 돈이 부족합니다!")
@@ -277,7 +277,7 @@ st.divider()
 
 if st.button("🔄 게임 초기화"):
 
-    st.session_state.money = 100000
+    st.session_state.money = 1000000
     st.session_state.games = 0
     st.session_state.wins = 0
 
