@@ -42,6 +42,13 @@ st.markdown("""
     margin-top:10px;
 }
 
+.shop-box {
+    padding:15px;
+    border-radius:10px;
+    background:#fff3cd;
+    margin-top:10px;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -62,6 +69,15 @@ if "games" not in st.session_state:
 
 if "wins" not in st.session_state:
     st.session_state.wins = 0
+
+if "discount_ticket" not in st.session_state:
+    st.session_state.discount_ticket = False
+
+if "number_reduce" not in st.session_state:
+    st.session_state.number_reduce = False
+
+if "shop_open" not in st.session_state:
+    st.session_state.shop_open = False
 
 # -----------------------------
 # 번호 색상 함수
@@ -107,12 +123,18 @@ def draw_balls(numbers):
 # -----------------------------
 def generate_lotto_numbers():
 
-    selected = random.sample(range(1, 46), 7)
+    # 아이템 적용
+    if st.session_state.number_reduce:
+        max_number = 30
+    else:
+        max_number = 45
+
+    selected = random.sample(range(1, max_number + 1), 7)
 
     main_numbers = sorted(selected[:6])
     bonus_number = selected[6]
 
-    return main_numbers, bonus_number
+    return main_numbers, bonus_number, max_number
 
 # -----------------------------
 # 당첨 확인
@@ -165,12 +187,95 @@ col3.metric("🏆 당첨 횟수", st.session_state.wins)
 st.divider()
 
 # -----------------------------
+# 상점 열기
+# -----------------------------
+if st.button("🛒 상점 열기"):
+    st.session_state.shop_open = True
+
+# -----------------------------
+# 상점
+# -----------------------------
+if st.session_state.shop_open:
+
+    st.subheader("🛒 아이템 상점")
+
+    st.markdown("""
+    <div class="shop-box">
+
+    💸 <b>반값 티켓 기계</b><br>
+    가격: 3,000,000원<br>
+    효과: 로또 가격 1000원 → 500원
+
+    </div>
+    """, unsafe_allow_html=True)
+
+    if not st.session_state.discount_ticket:
+
+        if st.button("💸 반값 티켓 구매"):
+
+            if st.session_state.money >= 3000000:
+
+                st.session_state.money -= 3000000
+                st.session_state.discount_ticket = True
+
+                st.success("반값 티켓 기계를 구매했습니다!")
+
+            else:
+                st.error("돈이 부족합니다!")
+
+    else:
+        st.info("✅ 반값 티켓 기계 보유 중")
+
+    # -----------------------------
+    # 번호 감소 아이템
+    # -----------------------------
+    st.markdown("""
+    <div class="shop-box">
+
+    🎯 <b>번호 감소 기계</b><br>
+    가격: 10,000,000원<br>
+    효과: 숫자 범위 1~45 → 1~30
+
+    </div>
+    """, unsafe_allow_html=True)
+
+    if not st.session_state.number_reduce:
+
+        if st.button("🎯 번호 감소 기계 구매"):
+
+            if st.session_state.money >= 10000000:
+
+                st.session_state.money -= 10000000
+                st.session_state.number_reduce = True
+
+                st.success("번호 감소 기계를 구매했습니다!")
+
+            else:
+                st.error("돈이 부족합니다!")
+
+    else:
+        st.info("✅ 번호 감소 기계 보유 중")
+
+    # -----------------------------
+    # 상점 나가기
+    # -----------------------------
+    if st.button("🚪 상점 나가기"):
+        st.session_state.shop_open = False
+
+st.divider()
+
+# -----------------------------
 # 자동 번호 생성
 # -----------------------------
 if st.button("🤖 자동 번호 선택"):
 
+    if st.session_state.number_reduce:
+        max_number = 30
+    else:
+        max_number = 45
+
     st.session_state.auto_numbers = sorted(
-        random.sample(range(1, 46), 6)
+        random.sample(range(1, max_number + 1), 6)
     )
 
 # -----------------------------
@@ -178,11 +283,16 @@ if st.button("🤖 자동 번호 선택"):
 # -----------------------------
 st.subheader("✍️ 번호 선택")
 
+if st.session_state.number_reduce:
+    max_number = 30
+else:
+    max_number = 45
+
 default_numbers = st.session_state.get("auto_numbers", [])
 
 user_numbers = st.multiselect(
-    "1~45 중 6개의 번호를 선택하세요",
-    options=list(range(1, 46)),
+    f"1~{max_number} 중 6개의 번호를 선택하세요",
+    options=list(range(1, max_number + 1)),
     default=default_numbers,
     max_selections=6
 )
@@ -192,8 +302,11 @@ user_numbers = st.multiselect(
 # -----------------------------
 if st.button("🎲 로또 추첨하기"):
 
-    # 게임 비용
-    ticket_price = 10000
+    # 반값 아이템 적용
+    if st.session_state.discount_ticket:
+        ticket_price = 500
+    else:
+        ticket_price = 5000
 
     if st.session_state.money < ticket_price:
         st.error("💸 돈이 부족합니다!")
@@ -211,7 +324,7 @@ if st.button("🎲 로또 추첨하기"):
         st.session_state.games += 1
 
         # 로또 생성
-        lotto_numbers, bonus_number = generate_lotto_numbers()
+        lotto_numbers, bonus_number, max_number = generate_lotto_numbers()
 
         # 결과 계산
         matched, rank, prize = check_result(
@@ -219,15 +332,13 @@ if st.button("🎲 로또 추첨하기"):
             lotto_numbers
         )
 
-        # 당첨금 지급
+        # 상금 지급
         st.session_state.money += prize
 
         if prize > 0:
             st.session_state.wins += 1
 
-        # -----------------------------
         # 결과 출력
-        # -----------------------------
         st.success("🎉 추첨 완료!")
 
         st.subheader("🎯 당첨 번호")
@@ -248,14 +359,17 @@ if st.button("🎲 로또 추첨하기"):
 
         🏆 등수: <b>{rank}</b><br><br>
 
-        💰 획득 상금: <b>{prize:,}원</b>
+        💰 획득 상금: <b>{prize:,}원</b><br><br>
+
+        🎫 현재 티켓 가격: <b>{ticket_price:,}원</b><br><br>
+
+        🎯 현재 번호 범위: <b>1~{max_number}</b>
 
         </div>
         """, unsafe_allow_html=True)
 
         # 랜덤 메시지
         messages = [
-
             "🍀 다음 판에는 더 좋은 결과가 있을 거예요!",
             "🔥 오늘 운이 좋네요!",
             "🎰 다시 도전해보세요!",
@@ -265,13 +379,13 @@ if st.button("🎲 로또 추첨하기"):
 
         st.info(random.choice(messages))
 
-        # 이벤트 효과
+        # 1등 효과
         if matched == 6:
             st.balloons()
             st.snow()
 
 # -----------------------------
-# 게임 리셋
+# 게임 초기화
 # -----------------------------
 st.divider()
 
@@ -280,5 +394,8 @@ if st.button("🔄 게임 초기화"):
     st.session_state.money = 1000000
     st.session_state.games = 0
     st.session_state.wins = 0
+    st.session_state.discount_ticket = False
+    st.session_state.number_reduce = False
+    st.session_state.shop_open = False
 
     st.success("게임 데이터가 초기화되었습니다!")
