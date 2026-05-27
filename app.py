@@ -1,34 +1,25 @@
-import streamlit as st
 import random
 
+def generate_lotto_numbers():
+    """
+    로또 번호 (6개 메인 번호, 1개 보너스 번호)를 생성합니다.
+    """
+    # 1부터 45까지의 숫자 리스트 생성
+    all_numbers = list(range(1, 46))
 
-# 페이지 설정
-st.set_page_config(page_title="🎰 로또 번호 생성기", page_icon="🎯", layout="centered")
+    # 섞기
+    random.shuffle(all_numbers)
 
+    # 메인 번호 6개 선택
+    main_numbers = sorted(all_numbers[:6])
 
-st.title("🎰 로또 번호 생성기 (보너스 포함)")
-st.markdown("버튼을 누르면 **1~45** 중에서 **메인 6개 + 보너스 1개** 번호를 뽑아요! 🍀")
+    # 보너스 번호 1개 선택 (메인 번호에 없는 숫자)
+    bonus_number = all_numbers[6]
 
+    return main_numbers, bonus_number
 
-count = st.slider("몇 세트를 뽑을까요?", 1, 10, 1)
+# 번호 생성 및 출력
+main_nums, bonus_num = generate_lotto_numbers()
 
-
-def draw_one_set():
-main_numbers = sorted(random.sample(range(1, 46), 6))
-remaining = [n for n in range(1, 46) if n not in main_numbers]
-bonus = random.choice(remaining)
-return main_numbers, bonus
-
-
-if st.button("🎲 로또 번호 뽑기"):
-for i in range(1, count + 1):
-main, bonus = draw_one_set()
-st.success(f"세트 {i} ➜ 🎯 메인: {', '.join(map(str, main))}")
-st.info(f"세트 {i} ➜ 💎 보너스: {bonus}")
-st.balloons()
-else:
-st.caption("⬆️ 세트 개수를 정하고 버튼을 눌러보세요!")
-
-
-st.markdown("---")
-st.caption("Made with Streamlit · 행운 가득! 🍀")
+print(f"로또 메인 번호: {main_nums}")
+print(f"보너스 번호: {bonus_num}")
